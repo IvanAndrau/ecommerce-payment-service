@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,19 +19,23 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "payment_id")
-    private int id;
+    private Long id;
 
     @Column(name = "order_id", nullable = false)
-    private int orderId;
+    private Long orderId;
 
-    @Column(nullable = false)
-    private double amount;
+    @Column(nullable = false, precision = 12, scale = 2) // BigDecimal for currency
+    private BigDecimal amount;
 
-    @Column(nullable = false)
-    @Size(max = 50)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PaymentStatus status; // Enum for "INITIATED", "COMPLETED", "FAILED"
+
+    @Column(nullable = true)
+    @Size(max = 100)
+    private String transactionId;
 
     @CreationTimestamp
-    @Column(updatable = false)
+    @Column(updatable = false, nullable = false)
     private LocalDateTime createdAt;    //private Timestamp createdAt;
 }
