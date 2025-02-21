@@ -18,10 +18,10 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "payment_id")
-    private int id;
+    private Long id;
 
     @Column(name = "order_id", nullable = false)
-    private int orderId;
+    private Long orderId;
 
     @Column(nullable = false)
     private double amount;
@@ -29,6 +29,10 @@ public class Payment {
     @Column(nullable = false)
     @Size(max = 50)
     private String status;
+
+    @Column(nullable = true)
+    @Size(max = 100)
+    private String transactionId;
 
     @CreationTimestamp
     @Column(updatable = false)
