@@ -14,14 +14,14 @@ public interface IRefundService {
     //public Refund initiateRefund(Long paymentId);
 
     // method with optional parameter
-    public Refund initiateRefund(Long paymentId, Optional<Double> refundAmount);
+    Refund initiateRefund(Long paymentId, Optional<Double> refundAmount);
 
     // Check the status of a Refund
-    public Refund getRefundStatus(Long refundId);
+    Refund getRefundStatus(Long refundId);
 
     // Cancel a pending payment before it gets processed with status = CANCELLED
-    public Payment cancelPayment(Long paymentId);
+    Payment cancelPayment(Long paymentId);
 
     // Retrieve a list of failed transactions for monitoring and alerts
-    public List<Payment> getFailedPayments();
+    List<Payment> getFailedPayments();
 }

@@ -44,7 +44,7 @@ public class RefundServiceImpl implements IRefundService {
     public Refund initiateRefund(Long paymentId, Optional<Double> refundAmount) {
         Optional<Payment> paymentOpt = paymentRepository.findById(paymentId);
         Payment payment = paymentOpt.get();
-        if (!refundAmount.isEmpty()) {
+        if (!refundAmount.isPresent()) {
             log.error("Refund amount is not specified, minimum value is being assigned");
             refundAmount = Optional.of(refundAmount.orElse(0.0));
         }

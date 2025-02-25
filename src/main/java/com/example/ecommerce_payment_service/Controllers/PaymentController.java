@@ -2,7 +2,6 @@ package com.example.ecommerce_payment_service.Controllers;
 
 
 import com.example.ecommerce_payment_service.Entities.Payment;
-import com.example.ecommerce_payment_service.Entities.PaymentStatus;
 import com.example.ecommerce_payment_service.Entities.Refund;
 import com.example.ecommerce_payment_service.Services.IPaymentService;
 import com.example.ecommerce_payment_service.Services.IRefundService;
