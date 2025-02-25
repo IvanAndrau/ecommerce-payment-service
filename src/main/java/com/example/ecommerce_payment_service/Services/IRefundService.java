@@ -5,6 +5,7 @@ import com.example.ecommerce_payment_service.Entities.Refund;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public interface IRefundService {
@@ -13,7 +14,7 @@ public interface IRefundService {
     //public Refund initiateRefund(Long paymentId);
 
     // method with optional parameter
-    public Refund initiateRefund(Long paymentId, Double refundAmount);
+    public Refund initiateRefund(Long paymentId, Optional<Double> refundAmount);
 
     // Check the status of a Refund
     public Refund getRefundStatus(Long refundId);

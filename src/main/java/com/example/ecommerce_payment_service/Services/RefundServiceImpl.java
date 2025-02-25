@@ -6,7 +6,6 @@ import com.example.ecommerce_payment_service.Entities.Refund;
 import com.example.ecommerce_payment_service.Entities.RefundStatus;
 import com.example.ecommerce_payment_service.Repositories.PaymentRepository;
 import com.example.ecommerce_payment_service.Repositories.RefundRepository;
-import com.example.ecommerce_payment_service.Services.IRefundService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,18 +41,17 @@ public class RefundServiceImpl implements IRefundService {
 
     @Override
     @Transactional
-    public Refund initiateRefund(Long paymentId, Double refundAmount) {
+    public Refund initiateRefund(Long paymentId, Optional<Double> refundAmount) {
         Optional<Payment> paymentOpt = paymentRepository.findById(paymentId);
-
         Payment payment = paymentOpt.get();
-        if (refundAmount <= 0) {
-            log.error("Refund amount is less than or equal to 0");
-            throw new IllegalArgumentException("Refund amount is less than or equal to 0");
+        if (!refundAmount.isEmpty()) {
+            log.error("Refund amount is not specified, minimum value is being assigned");
+            refundAmount = Optional.of(refundAmount.orElse(0.0));
         }
 
         Refund refund = new Refund();
         refund.setPayment(payment);
-        refund.setRefundAmount(refundAmount);
+        refund.setRefundAmount(refundAmount.get());
         refund.setStatus(RefundStatus.PENDING);
 
         return refundRepository.save(refund);

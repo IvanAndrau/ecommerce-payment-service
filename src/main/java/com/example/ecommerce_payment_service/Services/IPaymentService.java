@@ -12,7 +12,7 @@ import java.util.List;
 public interface IPaymentService {
 
     // Saves a newly created Payment
-    Payment createPayment(Long orderId, BigDecimal amount, String transactionId);
+    Payment createPayment(Long orderId, BigDecimal amount, String paymentMethod);
 
     // Process the payment and interact with third-parties gateways
     Payment processPayment(Payment payment);
