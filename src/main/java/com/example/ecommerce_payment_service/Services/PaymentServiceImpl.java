@@ -10,6 +10,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.UUID.randomUUID;
+
 @Service
 @Slf4j
 public class PaymentServiceImpl implements IPaymentService{
@@ -22,7 +24,7 @@ public class PaymentServiceImpl implements IPaymentService{
 
     // Creates a new Payment object with provided properties
     @Override
-    public Payment createPayment(Long orderId, BigDecimal amount, String transactionId) {
+    public Payment createPayment(Long orderId, BigDecimal amount, String paymentMethod) {
 
         log.info("Payment object is being created");
         Payment payment = new Payment();
@@ -31,7 +33,7 @@ public class PaymentServiceImpl implements IPaymentService{
             payment.setOrderId(orderId);
             payment.setAmount(amount);
             payment.setStatus(PaymentStatus.INITIATED);
-            payment.setTransactionId(transactionId);
+            payment.setTransactionId(paymentMethod + "_" + randomUUID()); //Generate unique identifier using paymentMethod and unique UUID
         }
         catch (Exception e) {
             e.printStackTrace();
