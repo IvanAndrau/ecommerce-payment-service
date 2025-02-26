@@ -14,7 +14,7 @@ public interface IRefundService {
     //public Refund initiateRefund(Long paymentId);
 
     // method with optional parameter
-    Refund initiateRefund(Long paymentId, Optional<Double> refundAmount);
+    Refund initiateRefund(Long paymentId, Double refundAmount);
 
     // Check the status of a Refund
     Refund getRefundStatus(Long refundId);

@@ -20,24 +20,21 @@ import java.util.Optional;
 @Slf4j
 public class PaymentController {
     private final IPaymentService paymentService;
-    private final IRefundService refundService;
 
-    public PaymentController(@Qualifier("paymentServiceImpl")IPaymentService paymentService,
-                              @Qualifier("refundServiceImpl")IRefundService refundService) {
+    public PaymentController(@Qualifier("paymentServiceImpl")IPaymentService paymentService) {
         this.paymentService = paymentService;
-        this.refundService = refundService;
     }
 
 
-    // Initiate a new payment for an order
+    // Integrate custom exceptions like
+    // PaymentNotFoundException, InvalidRefundException, and OrderNotFoundException
     @PostMapping
     public ResponseEntity<Payment> createPayment(@Valid @RequestBody Long orderId,
                                                  BigDecimal amount, String paymentMethod) {
         Payment payment = paymentService.createPayment(orderId, amount, paymentMethod);
-        log.info("Payment created: " + payment);
+        log.info("Payment created: {}", payment);
         return ResponseEntity.ok(payment);
     }
-
 
     @PostMapping("/process/{paymentId}")
     public ResponseEntity<Payment> processPayment(@PathVariable("paymentId") Long paymentId) {
@@ -46,7 +43,6 @@ public class PaymentController {
 
         return ResponseEntity.ok(payment);
     }
-
 
     @GetMapping("/{paymentId}")
     public ResponseEntity<Payment> getPaymentById(@PathVariable("paymentId") Long paymentId) {
@@ -62,40 +58,9 @@ public class PaymentController {
         return payments;
     }
 
-
     @GetMapping("/order/{orderId}")
     public List<Payment> getPaymentByOrderId(@PathVariable("orderId") Long orderId) {
         List<Payment> payments = paymentService.getPaymentsByOrderId(orderId);
-
-        return payments;
-    }
-
-    // Refund methods
-
-    @PostMapping("/refund/{paymentId}")
-    public ResponseEntity<Refund> initiateRefund(@PathVariable("paymentId") Long paymentId, Optional<Double> refundAmount) {
-        Refund refund = refundService.initiateRefund(paymentId, refundAmount);
-
-        return ResponseEntity.ok(refund);
-    }
-
-    @GetMapping("/refund/{refundId}")
-    public ResponseEntity<Refund> getRefundById(@PathVariable("refundId") Long refundId) {
-        Refund refund = refundService.getRefundStatus(refundId);
-
-        return ResponseEntity.ok(refund);
-    }
-
-    @PostMapping("/cancel/{paymentId}")
-    public ResponseEntity<Payment> cancelPayment(@PathVariable("paymentId") Long paymentId) {
-        Payment payment = paymentService.getPaymentById(paymentId);
-
-        return ResponseEntity.ok(payment);
-    }
-
-    @GetMapping("/failed")
-    public List<Payment> getPaymentFailed() {
-        List<Payment> payments = refundService.getFailedPayments();
 
         return payments;
     }
