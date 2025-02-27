@@ -3,6 +3,8 @@ package com.example.ecommerce_payment_service.Controllers;
 
 import com.example.ecommerce_payment_service.Entities.Payment;
 import com.example.ecommerce_payment_service.Entities.Refund;
+import com.example.ecommerce_payment_service.Exceptions.OrderNotFoundException;
+import com.example.ecommerce_payment_service.Exceptions.PaymentNotFoundException;
 import com.example.ecommerce_payment_service.Services.IPaymentService;
 import com.example.ecommerce_payment_service.Services.IRefundService;
 import jakarta.validation.Valid;
@@ -25,19 +27,21 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
-
-    // Integrate custom exceptions like
-    // PaymentNotFoundException, InvalidRefundException, and OrderNotFoundException
     @PostMapping
     public ResponseEntity<Payment> createPayment(@Valid @RequestBody Long orderId,
                                                  BigDecimal amount, String paymentMethod) {
         Payment payment = paymentService.createPayment(orderId, amount, paymentMethod);
         log.info("Payment created: {}", payment);
+
         return ResponseEntity.ok(payment);
     }
 
     @PostMapping("/process/{paymentId}")
     public ResponseEntity<Payment> processPayment(@PathVariable("paymentId") Long paymentId) {
+        if(paymentService.getPaymentById(paymentId) == null) {
+            log.warn("Payment with id:{} cannot be found", paymentId);
+            throw new PaymentNotFoundException("Payment not found");    // is it possible to add WebRequest details here?
+        }
         Payment payment = paymentService.getPaymentById(paymentId);
         payment = paymentService.processPayment(payment);
 
@@ -60,6 +64,10 @@ public class PaymentController {
 
     @GetMapping("/order/{orderId}")
     public List<Payment> getPaymentByOrderId(@PathVariable("orderId") Long orderId) {
+        if(paymentService.getPaymentsByOrderId(orderId) == null) {
+            log.warn("Order with id:{} not found", orderId);
+            throw new OrderNotFoundException("Order with id:" + orderId + " not found");
+        }
         List<Payment> payments = paymentService.getPaymentsByOrderId(orderId);
 
         return payments;
