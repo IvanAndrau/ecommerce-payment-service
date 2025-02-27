@@ -25,33 +25,19 @@ public class RefundServiceImpl implements IRefundService {
         this.paymentRepository = paymentRepository;
     }
 
-//    @Override
-//    @Transactional
-//    // Start a refund process for a completed Payment
-//    public Refund initiateRefund(Long paymentId) {
-//        Payment payment = paymentRepository.findById(paymentId).orElse(null);
-//        Refund refund = new Refund();
-//        if(payment == null) {
-//            refund.setRefundAmount(0.0);
-//            refund.setStatus(RefundStatus.FAILED);
-//            refund.setReason("");   //should we get a refund object from database or should we create it inside this method?
-//        }
-//        return refund;  //not sure
-//    }
-
     @Override
     @Transactional
-    public Refund initiateRefund(Long paymentId, Optional<Double> refundAmount) {
+    public Refund initiateRefund(Long paymentId, Double refundAmount) {
         Optional<Payment> paymentOpt = paymentRepository.findById(paymentId);
         Payment payment = paymentOpt.get();
-        if (!refundAmount.isPresent()) {
+        if (refundAmount == null) {
             log.error("Refund amount is not specified, minimum value is being assigned");
-            refundAmount = Optional.of(refundAmount.orElse(0.0));
+            refundAmount = 0.0;
         }
 
         Refund refund = new Refund();
         refund.setPayment(payment);
-        refund.setRefundAmount(refundAmount.get());
+        refund.setRefundAmount(refundAmount);
         refund.setStatus(RefundStatus.PENDING);
 
         return refundRepository.save(refund);

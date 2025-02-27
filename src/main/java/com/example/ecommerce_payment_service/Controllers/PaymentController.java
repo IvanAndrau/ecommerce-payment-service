@@ -3,6 +3,8 @@ package com.example.ecommerce_payment_service.Controllers;
 
 import com.example.ecommerce_payment_service.Entities.Payment;
 import com.example.ecommerce_payment_service.Entities.Refund;
+import com.example.ecommerce_payment_service.Exceptions.OrderNotFoundException;
+import com.example.ecommerce_payment_service.Exceptions.PaymentNotFoundException;
 import com.example.ecommerce_payment_service.Services.IPaymentService;
 import com.example.ecommerce_payment_service.Services.IRefundService;
 import jakarta.validation.Valid;
@@ -20,33 +22,31 @@ import java.util.Optional;
 @Slf4j
 public class PaymentController {
     private final IPaymentService paymentService;
-    private final IRefundService refundService;
 
-    public PaymentController(@Qualifier("paymentServiceImpl")IPaymentService paymentService,
-                              @Qualifier("refundServiceImpl")IRefundService refundService) {
+    public PaymentController(@Qualifier("paymentServiceImpl")IPaymentService paymentService) {
         this.paymentService = paymentService;
-        this.refundService = refundService;
     }
 
-
-    // Initiate a new payment for an order
     @PostMapping
     public ResponseEntity<Payment> createPayment(@Valid @RequestBody Long orderId,
                                                  BigDecimal amount, String paymentMethod) {
         Payment payment = paymentService.createPayment(orderId, amount, paymentMethod);
-        log.info("Payment created: " + payment);
+        log.info("Payment created: {}", payment);
+
         return ResponseEntity.ok(payment);
     }
 
-
     @PostMapping("/process/{paymentId}")
     public ResponseEntity<Payment> processPayment(@PathVariable("paymentId") Long paymentId) {
+        if(paymentService.getPaymentById(paymentId) == null) {
+            log.warn("Payment with id:{} cannot be found", paymentId);
+            throw new PaymentNotFoundException("Payment not found");    // is it possible to add WebRequest details here?
+        }
         Payment payment = paymentService.getPaymentById(paymentId);
         payment = paymentService.processPayment(payment);
 
         return ResponseEntity.ok(payment);
     }
-
 
     @GetMapping("/{paymentId}")
     public ResponseEntity<Payment> getPaymentById(@PathVariable("paymentId") Long paymentId) {
@@ -62,40 +62,13 @@ public class PaymentController {
         return payments;
     }
 
-
     @GetMapping("/order/{orderId}")
     public List<Payment> getPaymentByOrderId(@PathVariable("orderId") Long orderId) {
+        if(paymentService.getPaymentsByOrderId(orderId) == null) {
+            log.warn("Order with id:{} not found", orderId);
+            throw new OrderNotFoundException("Order with id:" + orderId + " not found");
+        }
         List<Payment> payments = paymentService.getPaymentsByOrderId(orderId);
-
-        return payments;
-    }
-
-    // Refund methods
-
-    @PostMapping("/refund/{paymentId}")
-    public ResponseEntity<Refund> initiateRefund(@PathVariable("paymentId") Long paymentId, Optional<Double> refundAmount) {
-        Refund refund = refundService.initiateRefund(paymentId, refundAmount);
-
-        return ResponseEntity.ok(refund);
-    }
-
-    @GetMapping("/refund/{refundId}")
-    public ResponseEntity<Refund> getRefundById(@PathVariable("refundId") Long refundId) {
-        Refund refund = refundService.getRefundStatus(refundId);
-
-        return ResponseEntity.ok(refund);
-    }
-
-    @PostMapping("/cancel/{paymentId}")
-    public ResponseEntity<Payment> cancelPayment(@PathVariable("paymentId") Long paymentId) {
-        Payment payment = paymentService.getPaymentById(paymentId);
-
-        return ResponseEntity.ok(payment);
-    }
-
-    @GetMapping("/failed")
-    public List<Payment> getPaymentFailed() {
-        List<Payment> payments = refundService.getFailedPayments();
 
         return payments;
     }

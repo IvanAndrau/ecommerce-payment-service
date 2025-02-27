@@ -26,18 +26,13 @@ public class PaymentServiceImpl implements IPaymentService{
     @Override
     public Payment createPayment(Long orderId, BigDecimal amount, String paymentMethod) {
 
-        log.info("Payment object is being created");
         Payment payment = new Payment();
 
-        try {
-            payment.setOrderId(orderId);
-            payment.setAmount(amount);
-            payment.setStatus(PaymentStatus.INITIATED);
-            payment.setTransactionId(paymentMethod + "_" + randomUUID()); //Generate unique identifier using paymentMethod and unique UUID
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
+        payment.setOrderId(orderId);
+        payment.setAmount(amount);
+        payment.setStatus(PaymentStatus.INITIATED);
+        payment.setTransactionId(paymentMethod + "_" + randomUUID()); //Generate unique identifier using paymentMethod and unique UUID
+
         return paymentRepository.save(payment);
     }
 
@@ -49,21 +44,15 @@ public class PaymentServiceImpl implements IPaymentService{
         boolean thirdPartyServiceAcceptedPayment;
         Payment ongoingPayment = new Payment();
 
-        try {
-            ongoingPayment = paymentRepository.getReferenceById(payment.getId());
-            // Place to insert third-party gateway to handle payment
-            thirdPartyServiceAcceptedPayment = true;
+        ongoingPayment = paymentRepository.getReferenceById(payment.getId());
+        // Place to insert third-party gateway to handle payment
+        thirdPartyServiceAcceptedPayment = true;
 
-            if(thirdPartyServiceAcceptedPayment) {
-                ongoingPayment.setStatus(PaymentStatus.COMPLETED);
-            }
-            else {  // if third-party gateway rejected the payment
-                ongoingPayment.setStatus(PaymentStatus.CANCELLED);
-            }
+        if(thirdPartyServiceAcceptedPayment) {
+            ongoingPayment.setStatus(PaymentStatus.COMPLETED);
         }
-        catch(Exception e) {
-            ongoingPayment.setStatus(PaymentStatus.FAILED);
-            e.printStackTrace();    //
+        else {  // if third-party gateway rejected the payment
+            ongoingPayment.setStatus(PaymentStatus.CANCELLED);
         }
 
         return ongoingPayment;
@@ -74,13 +63,7 @@ public class PaymentServiceImpl implements IPaymentService{
     public Payment getPaymentById(Long paymentId)
     {
         Payment payment = new Payment();
-
-        try {
-            payment = paymentRepository.getReferenceById(paymentId);
-        }
-        catch(Exception e) {
-            e.printStackTrace();    //
-        }
+        payment = paymentRepository.getReferenceById(paymentId);
 
         return payment;
     }
@@ -90,13 +73,7 @@ public class PaymentServiceImpl implements IPaymentService{
     public List<Payment> getPaymentsByUserId(Long userId)
     {
         List<Payment> payments = new ArrayList<>();
-
-        try {
-            payments = paymentRepository.findByUserId(userId);
-        }
-        catch(Exception e) {
-            e.printStackTrace();    //
-        }
+        payments = paymentRepository.findByUserId(userId);
 
         return payments;
     }
@@ -106,13 +83,7 @@ public class PaymentServiceImpl implements IPaymentService{
     public List<Payment> getPaymentsByOrderId(Long orderId)
     {
         List<Payment> payments = new ArrayList<>();
-
-        try {
-            payments = paymentRepository.findByOrderId(orderId);
-        }
-        catch(Exception e) {
-            e.printStackTrace();    //
-        }
+        payments = paymentRepository.findByOrderId(orderId);
 
         return payments;
     }
