@@ -10,6 +10,7 @@ import com.example.ecommerce_payment_service.Services.IRefundService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,6 +24,7 @@ import java.util.Optional;
 @RequestMapping("/api/payments")
 @Slf4j
 @Tag(name = "Refund Controller", description = "API for managing refunds")
+@SecurityRequirement(name = "bearerAuth") // <==== All endpoints require JWT **except where overridden**
 public class RefundController {
     private final IPaymentService paymentService;
     private final IRefundService refundService;
