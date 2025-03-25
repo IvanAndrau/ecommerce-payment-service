@@ -1,32 +1,44 @@
 package com.example.ecommerce_payment_service.Configurations;
 
+import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.List;
 
 @Configuration
 public class OpenAPIConfiguration {
 
     @Bean
     public OpenAPI defineOpenApi() {
-        Server server = new Server();
-        server.setUrl("http://localhost:8080"); //
-        server.setDescription("Swagger for handy development");
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Payment Service API")
+                        .version("1.0")
+                        .description("This API exposes endpoints to manage payment-related transactions.")
+                        .contact(new Contact()
+                                .name("Ivan")
+                                .email("ivan.andrau@gmail.com")
+                                .url("https://eric-muganga-portfolio.vercel.app/")
+                        )
+                )
+                .externalDocs(new ExternalDocumentation()
+                        .description("Project GitHub Repository")
+                        .url("https://github.com/IvanAndrau/ecommerce-payment-service"))
 
-        Contact myContact = new Contact();
-        myContact.setName("Ivan");
-        myContact.setEmail("ivan.andrau@gmail.com");
-
-        Info information = new Info()
-                .title("Payment Service API")
-                .version("1.0")
-                .description("This API exposes endpoints to manage payment-related transactions.")
-                .contact(myContact);
-        return new OpenAPI().info(information).servers(List.of(server));
+                // Enable JWT Security
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+                .components(new io.swagger.v3.oas.models.Components()
+                        .addSecuritySchemes("bearerAuth",
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")
+                                        .description("Enter your JWT token here")
+                        )
+                );
     }
 }
