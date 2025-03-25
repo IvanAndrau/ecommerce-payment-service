@@ -8,6 +8,7 @@ import com.example.ecommerce_payment_service.Services.IPaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.List;
 @RequestMapping("/api/payments")
 @Slf4j
 @Tag(name = "Payment Controller", description = "API for managing payments")
+@SecurityRequirement(name = "bearerAuth") // <==== All endpoints require JWT **except where overridden**
 public class PaymentController {
     private final IPaymentService paymentService;
 
@@ -38,10 +40,13 @@ public class PaymentController {
     @PostMapping
     public ResponseEntity<Payment> createPayment(@Valid @RequestBody Long orderId,
                                                  BigDecimal amount, String paymentMethod) {
-        Payment payment = paymentService.createPayment(orderId, amount, paymentMethod);
-        log.info("Payment created: {}", payment);
-
-        return ResponseEntity.ok(payment);
+        try {
+            Payment payment = paymentService.createPayment(orderId, amount, paymentMethod);
+            log.info("Payment created: {}", payment);
+            return ResponseEntity.ok(payment);
+        } catch (OrderNotFoundException ex) {
+            throw new OrderNotFoundException("Order ID " + orderId + " not found.");
+        }
     }
 
     @Operation(summary = "Process a payment", description = "Processes a payment for the given payment ID")
@@ -51,13 +56,12 @@ public class PaymentController {
     })
     @PostMapping("/process/{paymentId}")
     public ResponseEntity<Payment> processPayment(@PathVariable("paymentId") Long paymentId) {
-        if(paymentService.getPaymentById(paymentId) == null) {
-            log.warn("Payment with id:{} cannot be found", paymentId);
-            throw new PaymentNotFoundException("Payment not found");    // is it possible to add WebRequest details here?
-        }
         Payment payment = paymentService.getPaymentById(paymentId);
+        if (payment == null) {
+            log.warn("Payment with id:{} cannot be found", paymentId);
+            throw new PaymentNotFoundException("Payment not found with ID: " + paymentId);
+        }
         payment = paymentService.processPayment(payment);
-
         return ResponseEntity.ok(payment);
     }
 
@@ -69,7 +73,9 @@ public class PaymentController {
     @GetMapping("/{paymentId}")
     public ResponseEntity<Payment> getPaymentById(@PathVariable("paymentId") Long paymentId) {
         Payment payment = paymentService.getPaymentById(paymentId);
-
+        if (payment == null) {
+            throw new PaymentNotFoundException("Payment not found with ID: " + paymentId);
+        }
         return ResponseEntity.ok(payment);
     }
 
@@ -80,7 +86,9 @@ public class PaymentController {
     @GetMapping("/user/{userId}")
     public List<Payment> getPaymentByUserId(@PathVariable("userId") Long userId) {
         List<Payment> payments = paymentService.getPaymentsByUserId(userId);
-
+        if(payments == null || payments.isEmpty()) {
+            throw new PaymentNotFoundException("Payment not found with ID: " + userId);
+        }
         return payments;
     }
 
@@ -91,12 +99,10 @@ public class PaymentController {
     })
     @GetMapping("/order/{orderId}")
     public List<Payment> getPaymentByOrderId(@PathVariable("orderId") Long orderId) {
-        if(paymentService.getPaymentsByOrderId(orderId) == null) {
-            log.warn("Order with id:{} not found", orderId);
-            throw new OrderNotFoundException("Order with id:" + orderId + " not found");
-        }
         List<Payment> payments = paymentService.getPaymentsByOrderId(orderId);
-
+        if (payments == null || payments.isEmpty()) {
+            throw new OrderNotFoundException("No payments found for Order ID: " + orderId);
+        }
         return payments;
     }
 }
