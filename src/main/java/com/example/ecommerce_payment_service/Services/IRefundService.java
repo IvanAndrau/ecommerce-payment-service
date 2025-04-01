@@ -24,4 +24,7 @@ public interface IRefundService {
 
     // Retrieve a list of failed transactions for monitoring and alerts
     List<Payment> getFailedPayments();
+
+
+    Refund completeRefund(Long refundId, boolean success);
 }
