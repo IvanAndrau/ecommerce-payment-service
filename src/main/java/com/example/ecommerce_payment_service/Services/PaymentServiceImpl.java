@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +32,11 @@ public class PaymentServiceImpl implements IPaymentService{
         payment.setOrderId(orderId);
         payment.setAmount(amount);
         payment.setStatus(PaymentStatus.INITIATED);
-        payment.setTransactionId(paymentMethod + "_" + randomUUID()); //Generate unique identifier using paymentMethod and unique UUID
+        payment.setPaymentMethod(paymentMethod);
+
+        // Generate unique transaction ID
+        String transactionId = paymentMethod + "_" + randomUUID();
+        payment.setTransactionId(transactionId);
 
         return paymentRepository.save(payment);
     }
@@ -40,22 +45,19 @@ public class PaymentServiceImpl implements IPaymentService{
     @Override
     public Payment processPayment(Payment payment)
     {
-        // imitation of status after interacting with third-party gateway
-        boolean thirdPartyServiceAcceptedPayment;
-        Payment ongoingPayment = new Payment();
+        // Simulate third-party interaction (this would be a Stripe/PayPal API call)
+        boolean thirdPartyServiceAcceptedPayment = true;
 
-        ongoingPayment = paymentRepository.getReferenceById(payment.getId());
-        // Place to insert third-party gateway to handle payment
-        thirdPartyServiceAcceptedPayment = true;
+        Payment ongoingPayment = paymentRepository.getReferenceById(payment.getId());
 
-        if(thirdPartyServiceAcceptedPayment) {
+        if (thirdPartyServiceAcceptedPayment) {
             ongoingPayment.setStatus(PaymentStatus.COMPLETED);
-        }
-        else {  // if third-party gateway rejected the payment
+            ongoingPayment.setProcessedAt(LocalDateTime.now()); // Set timestamp
+        } else {
             ongoingPayment.setStatus(PaymentStatus.CANCELLED);
         }
 
-        return ongoingPayment;
+        return paymentRepository.save(ongoingPayment); // Persist update
     }
 
     // Retrieves details of a specific payment
