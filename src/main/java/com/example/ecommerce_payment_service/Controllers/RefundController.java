@@ -43,11 +43,27 @@ public class RefundController {
     })
     @PostMapping("/refund/{paymentId}")
     public ResponseEntity<Refund> initiateRefund(@PathVariable("paymentId") Long paymentId, Optional<Double> refundAmount) {
-        if(refundAmount.get() < 0.0) {
+
+        if (refundAmount.isPresent() && refundAmount.get() < 0.0) {
             throw new InvalidRefundException("Refund amount cannot be negative");
         }
         Refund refund = refundService.initiateRefund(paymentId, refundAmount.orElse(null));
 
+        return ResponseEntity.ok(refund);
+    }
+
+
+    @Operation(summary = "Complete a refund", description = "Updates refund status to COMPLETED or FAILED")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Refund completed/failed successfully"),
+            @ApiResponse(responseCode = "404", description = "Refund not found")
+    })
+    @PatchMapping("/refund/{refundId}/complete")
+    public ResponseEntity<Refund> completeRefund(
+            @PathVariable("refundId") Long refundId,
+            @RequestParam boolean success
+    ) {
+        Refund refund = refundService.completeRefund(refundId, success);
         return ResponseEntity.ok(refund);
     }
 
@@ -59,11 +75,10 @@ public class RefundController {
     @Tag(name = "get", description = "get refund by refund id")
     @GetMapping("/refund/{refundId}")
     public ResponseEntity<Refund> getRefundById(@PathVariable("refundId") Long refundId) {
-        if(refundService.getRefundStatus(refundId) == null) {
-            throw new RefundNotFoundException("Refund  with id:" + refundId + "not found");
-        }
         Refund refund = refundService.getRefundStatus(refundId);
-
+        if (refund == null) {
+            throw new RefundNotFoundException("Refund with id: " + refundId + " not found");
+        }
         return ResponseEntity.ok(refund);
     }
 
@@ -74,8 +89,7 @@ public class RefundController {
     })
     @PostMapping("/cancel/{paymentId}")
     public ResponseEntity<Payment> cancelPayment(@PathVariable("paymentId") Long paymentId) {
-        Payment payment = paymentService.getPaymentById(paymentId);
-
+        Payment payment = refundService.cancelPayment(paymentId);
         return ResponseEntity.ok(payment);
     }
 
