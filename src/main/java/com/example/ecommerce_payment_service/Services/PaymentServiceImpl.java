@@ -3,6 +3,9 @@ package com.example.ecommerce_payment_service.Services;
 import com.example.ecommerce_payment_service.Entities.Payment;
 import com.example.ecommerce_payment_service.Entities.PaymentStatus;
 import com.example.ecommerce_payment_service.Repositories.PaymentRepository;
+import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentIntent;
+import com.stripe.param.PaymentIntentCreateParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -45,19 +48,32 @@ public class PaymentServiceImpl implements IPaymentService{
     @Override
     public Payment processPayment(Payment payment)
     {
-        // Simulate third-party interaction (this would be a Stripe/PayPal API call)
-        boolean thirdPartyServiceAcceptedPayment = true;
-
         Payment ongoingPayment = paymentRepository.getReferenceById(payment.getId());
 
-        if (thirdPartyServiceAcceptedPayment) {
+        try {
+            // Convert to smallest currency unit (Stripe uses cents)
+            long stripeAmount = ongoingPayment.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
+
+            // Create Stripe PaymentIntent
+            PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+                    .setAmount(stripeAmount)
+                    .setCurrency("usd")
+                    .setDescription("Payment for Order #" + ongoingPayment.getOrderId())
+                    .build();
+
+            PaymentIntent paymentIntent = PaymentIntent.create(params);
+
+            // Update payment with Stripe result
             ongoingPayment.setStatus(PaymentStatus.COMPLETED);
-            ongoingPayment.setProcessedAt(LocalDateTime.now()); // Set timestamp
-        } else {
-            ongoingPayment.setStatus(PaymentStatus.CANCELLED);
+            ongoingPayment.setProcessedAt(LocalDateTime.now());
+            ongoingPayment.setTransactionId(paymentIntent.getId());
+
+        } catch (StripeException e) {
+            log.error("Stripe payment failed: {}", e.getMessage());
+            ongoingPayment.setStatus(PaymentStatus.FAILED);
         }
 
-        return paymentRepository.save(ongoingPayment); // Persist update
+        return paymentRepository.save(ongoingPayment);
     }
 
     // Retrieves details of a specific payment
