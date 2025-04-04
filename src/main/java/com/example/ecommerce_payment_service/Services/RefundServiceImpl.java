@@ -4,6 +4,8 @@ import com.example.ecommerce_payment_service.Entities.Payment;
 import com.example.ecommerce_payment_service.Entities.PaymentStatus;
 import com.example.ecommerce_payment_service.Entities.Refund;
 import com.example.ecommerce_payment_service.Entities.RefundStatus;
+import com.example.ecommerce_payment_service.Exceptions.InvalidRefundException;
+import com.example.ecommerce_payment_service.Exceptions.RefundNotFoundException;
 import com.example.ecommerce_payment_service.Repositories.PaymentRepository;
 import com.example.ecommerce_payment_service.Repositories.RefundRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -35,11 +37,29 @@ public class RefundServiceImpl implements IRefundService {
             refundAmount = 0.0;
         }
 
+        if (refundAmount > payment.getAmount().doubleValue()) {
+            throw new IllegalArgumentException("Refund amount exceeds original payment amount.");
+        }
+
         Refund refund = new Refund();
         refund.setPayment(payment);
         refund.setRefundAmount(refundAmount);
         refund.setStatus(RefundStatus.PENDING);
 
+        return refundRepository.save(refund);
+    }
+
+    @Override
+    @Transactional
+    public Refund completeRefund(Long refundId, boolean success) {
+        Refund refund = refundRepository.findById(refundId)
+                .orElseThrow(() -> new RefundNotFoundException("Refund with ID " + refundId + " not found"));
+
+        if (refund.getStatus() != RefundStatus.PENDING) {
+            throw new InvalidRefundException("Refund is already processed or in an invalid state.");
+        }
+
+        refund.setStatus(success ? RefundStatus.COMPLETED : RefundStatus.FAILED);
         return refundRepository.save(refund);
     }
 
@@ -70,4 +90,6 @@ public class RefundServiceImpl implements IRefundService {
     public List<Payment> getFailedPayments() {
         return paymentRepository.findByStatus(PaymentStatus.FAILED);
     }
+
+
 }

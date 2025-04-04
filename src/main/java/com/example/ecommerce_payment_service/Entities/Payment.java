@@ -35,6 +35,12 @@ public class Payment {
     @Size(max = 100)
     private String transactionId;
 
+    @Column(nullable = false, length = 20)
+    private String paymentMethod; // "Stripe", "PayPal", etc.
+
+    @Column
+    private LocalDateTime processedAt;
+
     @CreationTimestamp
     @Column(updatable = false, nullable = false)
     private LocalDateTime createdAt;    //private Timestamp createdAt;
