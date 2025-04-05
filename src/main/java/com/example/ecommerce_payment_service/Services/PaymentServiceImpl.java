@@ -3,10 +3,12 @@ package com.example.ecommerce_payment_service.Services;
 import com.example.ecommerce_payment_service.Entities.Payment;
 import com.example.ecommerce_payment_service.Entities.PaymentStatus;
 import com.example.ecommerce_payment_service.Repositories.PaymentRepository;
+import com.example.ecommerce_payment_service.dto.PaymentConfirmedEvent;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,6 +23,7 @@ import static java.util.UUID.randomUUID;
 public class PaymentServiceImpl implements IPaymentService{
 
     private final PaymentRepository paymentRepository;
+    private KafkaTemplate<String, PaymentConfirmedEvent> kafkaTemplate;
 
     public PaymentServiceImpl(PaymentRepository paymentRepository) {
         this.paymentRepository = paymentRepository;
@@ -67,6 +70,9 @@ public class PaymentServiceImpl implements IPaymentService{
             ongoingPayment.setStatus(PaymentStatus.COMPLETED);
             ongoingPayment.setProcessedAt(LocalDateTime.now());
             ongoingPayment.setTransactionId(paymentIntent.getId());
+
+            kafkaTemplate.send("payment-confirmed", new
+                    PaymentConfirmedEvent(ongoingPayment.getOrderId(), "PAID"));
 
         } catch (StripeException e) {
             log.error("Stripe payment failed: {}", e.getMessage());
